@@ -14,6 +14,8 @@ class Client:
         self.__data = [] # Данные ответа на запрос
         self.unreaddata = [] # Данные ответа на запрос
 
+        self.send = [{"request": "move", "move": ("pawn",8,16)}] # Команды для отправки серверу
+            
         self.objects = [] # Создаем массив для хранения данных об объектах
 
         Thread(target=self.__getObjects).start()
@@ -91,6 +93,9 @@ class Client:
             self.__conn.sendall(bytes(json.dumps({"request": "get_objects"}), 'UTF-8'))
             # Отправляем серверу запрос для обновления данных объектов,
             # а также указываем серверу этим на то, что клиент в обработке
+            for s in self.send: # Проверяем, нужно ли что-то сообщить серверу
+                self.__conn.sendall(bytes(json.dumps(s), 'UTF-8'))
+            self.send.clear()
             
             self.__data.clear()
             self.__data = self.__conn.recv(1024) # ждем запросов от клиента
@@ -109,10 +114,10 @@ class Client:
                 # загружаем данные в json формате
                 self.__data = json.loads(self.__data)
                 #print(type(self.__data))
-                for cmds in self.__data:
-                    if cmds["request"]=="set_objects":
-                        self.unreaddata.append({"request":"set_objects","response":self.__decode(cmds["response"])})
-
+                for cmd in self.__data:
+                    #if cmds["request"]=="set_objects":
+                    #    self.unreaddata.append({"request":"set_objects","response":self.__decode(cmd["response"])})
+                    self.unreaddata.append(cmd)
                 self.unreaddata.append(self.__data)
 
     def __move(self, code):

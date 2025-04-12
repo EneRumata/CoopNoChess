@@ -285,7 +285,17 @@ class OngoingGameServer:
             self.onpassan.append(piece)
             self.onpassan.append(squeres)
             
-        def clearOnpassan(self,piece,squeres):
+        def clearOnpassan(self):
+            self.onpassan.clear()
+            
+        def addPremove(self,move):
+            self.premoves.append(move)
+            
+        def removeFirstPremove(self):
+            if len(self.premoves)>0:
+                self.premoves.pop(0)
+            
+        def clearPremoves(self):
             self.onpassan.clear()
             
         def changeController(self, controller):
@@ -493,8 +503,11 @@ class OngoingGameServer:
                     else:
                         print("an error with index dest of the square, movePieceToDest")
                         return -1
-                if (not(self.__isDestEmpty(dest))):
+                if self.__isDestEmpty(dest):
+                    piece.lastmove = "move"
+                else:
                     if (not(self.__isPieceAlly(piece,self.__coordToPiece(coord)[0]))):
+                        piece.lastmove = "capture"
                         self.__removePiece(self.__coordToPiece(coord)[0],dest)
                     else:
                         print("an error with dest of the square (ally), movePieceToDest")
@@ -982,10 +995,7 @@ class OngoingGameServer:
                 return True
         return False
         
-    def __TryMove(self, move, pid):
-        if not(self.__player[self.__currentmove].controller == pid):
-            print("not "+str(pid)+" turn, __TryMove")
-            return False
+    def __TryMove(self, move):
         (piecetype,index1,index2) = move
         if self.__isDestEmpty(index1):
             print("no piece at the start "+str(index1)+", __TryMove")
@@ -1004,12 +1014,20 @@ class OngoingGameServer:
         print("wtf, __TryMove")
         return False
         
+    def __AddMove(self, move, pid):
+        for i in self.__player:
+            if i.controller == pid:
+                i.addPremove(move)
+                return True
+        return False
+            
+        
     def __executeOrder(self, order):
         cmd = order["command"]
         if cmd=="newcomer":
             return self.__TryAddIdToPlayers(order["id"])
         elif cmd=="move":
-            if self.__TryMove(order["move"],order["id"]):
+            if self.__AddMove(order["move"],order["id"]):
                 self.__currentmove = (self.__currentmove+1)%len(self.__movequeue)
                 return True
             else:
@@ -1025,6 +1043,16 @@ class OngoingGameServer:
                 order = self.__server.newCommands[0]
                 self.__server.newCommands.remove(order)
                 print ("order "+str(order)+" "+str(self.__executeOrder(order)))
+
+            p = self.__player[self.__movequeue[self.__currentmove]]
+            if len(p.premoves)>0:
+                if self.__TryMove(p.premoves[0]):
+                    p.removeFirstPremove()
+                    self.__currentmove = (self.__currentmove+1)%len(self.__movequeue)
+                    self.server.sendToClient({"request": "premove_result", "response": True})
+                else:
+                    p.clearPremoves()
+                    self.server.sendToClient({"request": "premove_result", "response": False})
 
             self.__addObjectsToServerClass()
             pygame.time.delay(2)

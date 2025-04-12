@@ -21,6 +21,9 @@ class Server:
 
         Thread(target=self.__listen).start() # Запускаем в новом потоке проверку действий игрока
 
+    def sendToClient(self, cmd, pid):
+        self.__players[pid].send.append(cmd)
+        
     class __ClientThreadPack:
         def __init__(self, player_parent_object, player_conn, player_addr, player_id):
             self.__parent = player_parent_object
@@ -29,6 +32,7 @@ class Server:
             self.id = player_id
             self.__waiting = 0 # Кол-во ожиданий ответа до дисконнекта
             self.__data = "" # Данные ответа на запрос
+            self.send = [] # Команды для отправки клиенту
             
             self.__thread = Thread(target=self.handleClientThreadPack, args=(self.__conn,)).start() # Запускаем в новом потоке проверку действий игрока
             
@@ -72,10 +76,10 @@ class Server:
                             #print(answer_to_objects)
                             self.__conn.sendall(bytes(json.dumps({"request": "set_objects", "response": answer_to_objects}), 'UTF-8'))
 
-                        # движение
-                        elif cmd == "move":
-                            self.newCommands.append({"command":"move","move":d["move"],"id":self.id})
-                            
+                    for s in self.send: # Проверяем, нужно ли что-то сообщить серверу
+                        self.__conn.sendall(bytes(json.dumps(s), 'UTF-8'))
+                    self.send.clear()
+                    
                 except Exception as e:
                     print(e)
 
@@ -102,7 +106,6 @@ class Server:
                     newpack = self.__ClientThreadPack(self,conn,addr,len(self.__players))
                     self.__players.append(newpack)# добавляем его в массив игроков
                     self.newCommands.append({"command":"newcomer","id":newpack.id})
-                    #self.newCommands.append({"command":"move","move":("pawn",8,16),"id":newpack.id})
 
 
 if __name__ == "__main__":
