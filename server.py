@@ -75,8 +75,10 @@ class Server:
                             answer_to_objects = self.__parent.objects
                             #print(answer_to_objects)
                             self.__conn.sendall(bytes(json.dumps({"request": "set_objects", "response": answer_to_objects}), 'UTF-8'))
+                        elif cmd == "move":
+                            self.__parent.newCommands.append({"command":"move","move":d["move"],"id":self.id})
 
-                    for s in self.send: # Проверяем, нужно ли что-то сообщить серверу
+                    for s in self.send: # Проверяем, нужно ли что-то сообщить клиенту
                         self.__conn.sendall(bytes(json.dumps(s), 'UTF-8'))
                     self.send.clear()
                     

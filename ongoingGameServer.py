@@ -9,15 +9,15 @@ class OngoingGameServer:
     def __init__(self, addr, max_conn=999):
         
         self.__incodetable = ("0123456789abcdefghijklmnopqrstuvwxyz","%%","[],.()","-")
+
+        
+        
         
         pygame.init() # Инициализируем pygame
         self.__pause = True # Стоит ли игра на паузе
-        self.__state = "waiting_for_players" # Состояние сервера
+        self.__states = ("waiting_for_players","battle","preparation")
+        self.__state = 0 # Состояние сервера
         self.__player = [] # Массив игроков
-        self.__createPlayers()
-        
-        # Создаём объект-сервер для получения команд от объектов-клиентов
-        self.__server = Server(addr)
         
         #
         #
@@ -34,28 +34,15 @@ class OngoingGameServer:
         # Максимальный размер доски, её строки и столбцы
         self.__initialdesk = (("a","b","c","d","e","f","g","h","i","j","k","l","m","n"),("1","2","3","4","5","6","7","8","9","10","11","12","13","14"))
         self.__desk = [[],[]] # Доска
+        self.__ptids = 0
+        self.__piecetypes = [] # Типы фигур
+        self.__pids = 0
         self.__pieces = [] # Фигуры
         self.__indexToCoordAndPieces = [] # Массивы доски и её связей
         self.__coordToIndexAndPieces = {}
 
         self.__lastmoves = ("none","move","capture","ability")
         
-        self.__piecetypes = ("lesserPawn","pawn", # Типы фигур
-                           "lesserRock","rock",
-                           "lesserKnight","knight",
-                           "lesserBishop","bishop",
-                           "queen","king")
-        
-        self.__piecenames = {self.__piecetypes[0]:"Сердечко", # Игровые имена фигур
-                           self.__piecetypes[1]:"Пешка",
-                           self.__piecetypes[2]:"Лодка",
-                           self.__piecetypes[3]:"Ладья",
-                           self.__piecetypes[4]:"Собака",
-                           self.__piecetypes[5]:"Конь",
-                           self.__piecetypes[6]:"Вор",
-                           self.__piecetypes[7]:"Слон",
-                           self.__piecetypes[8]:"Королева",
-                           self.__piecetypes[9]:"Король"}
         #
         #
         #
@@ -64,10 +51,16 @@ class OngoingGameServer:
 
         # Делаем новый поток с циклом, в которoм берем данные об игроках
 
-        self.__createDesk() # Создаёт новую доску
-        self.__createDefaultPieces() # Создаёт стандартные фигуры
+        
+        
+        self.__createDesk() # 0 - Создаёт новую доску
+        self.__dummyfornow() # 1 - Создаём типы фигур
+        self.__createPlayers() # 2 - Создаём игроков
+        self.__createDefaultPieces() # 3 - Создаёт стандартные фигуры
         #self.__testmoves() # Тестовые ходы
         #self.__printDeck() # Выводит доску в консоль
+        
+        self.__server = Server(addr) # Создаём объект-сервер
         
         Thread(target=self.__infiniteGameLoop).start()
         
@@ -76,8 +69,8 @@ class OngoingGameServer:
         self.__desk.append(self.__initialdesk[0][:width])
         self.__desk.append(self.__initialdesk[1][:height])
         count = 0
-        self.__indexToCoordAndPieces = [] # Массивы доски и её связей
-        self.__coordToIndexAndPieces = {}
+        self.__indexToCoordAndPieces.clear() # Массивы доски и её связей
+        self.__coordToIndexAndPieces.clear()
         for i in self.__desk[1]:
             for n in self.__desk[0]:
                 self.__indexToCoordAndPieces.append([(n,i),[]])
@@ -191,46 +184,46 @@ class OngoingGameServer:
         print("len i is "+str(len(self.__indexToCoordAndPieces)))
         
     def __createDefaultPieces(self): # Создаёт набор стандартных фигур для игроков 0 и 1
-        for new in (("rock",0,"a1",True),
-                    ("knight",0,"b1",True),
-                    ("bishop",0,"c1",True),
-                    ("queen",0,"d1",True),
-                    ("king",0,"e1",True),
-                    ("lesserBishop",0,"f1",True),
-                    ("knight",0,"g1",True),
-                    ("rock",0,"h1",True),
+        for new in (("rock",0,"a1"),
+                    ("knight",0,"b1"),
+                    ("bishop",0,"c1"),
+                    ("queen",0,"d1"),
+                    ("king",0,"e1"),
+                    ("lesserBishop",0,"f1"),
+                    ("knight",0,"g1"),
+                    ("rock",0,"h1"),
                     
-                    ("pawn",0,"a2",True),
-                    ("pawn",0,"b2",True),
-                    ("pawn",0,"c2",True),
-                    ("pawn",0,"d2",True),
-                    ("pawn",0,"e2",True),
-                    ("lesserPawn",0,"f2",True),
-                    ("lesserPawn",0,"g2",True),
-                    ("lesserPawn",0,"h2",True),
+                    ("pawn",0,"a2"),
+                    ("pawn",0,"b2"),
+                    ("pawn",0,"c2"),
+                    ("pawn",0,"d2"),
+                    ("pawn",0,"e2"),
+                    ("lesserPawn",0,"f2"),
+                    ("lesserPawn",0,"g2"),
+                    ("lesserPawn",0,"h2"),
                     
-                    ("rock",1,"a8",False),
-                    ("knight",1,"b8",False),
-                    ("bishop",1,"c8",False),
-                    ("queen",1,"d8",False),
-                    ("king",1,"e8",False),
-                    ("lesserBishop",1,"f8",False),
-                    ("knight",1,"g8",False),
-                    ("rock",1,"h8",False),
+                    ("rock",1,"a8"),
+                    ("knight",1,"b8"),
+                    ("bishop",1,"c8"),
+                    ("queen",1,"d8"),
+                    ("king",1,"e8"),
+                    ("lesserBishop",1,"f8"),
+                    ("knight",1,"g8"),
+                    ("rock",1,"h8"),
                     
-                    ("pawn",1,"a7",False),
-                    ("pawn",1,"b7",False),
-                    ("pawn",1,"c7",False),
-                    ("pawn",1,"d7",False),
-                    ("pawn",1,"e7",False),
-                    ("lesserPawn",1,"f7",False),
-                    ("lesserPawn",1,"g7",False),
-                    ("lesserPawn",1,"h7",False),
+                    ("pawn",1,"a7"),
+                    ("pawn",1,"b7"),
+                    ("pawn",1,"c7"),
+                    ("pawn",1,"d7"),
+                    ("pawn",1,"e7"),
+                    ("lesserPawn",1,"f7"),
+                    ("lesserPawn",1,"g7"),
+                    ("lesserPawn",1,"h7"),
                     ):
-            newpiece = self.__createPiece(new[0],new[1],new[2],pawndirection=new[3])
+            newpiece = self.__createPiece(new[0],new[1],coord=new[2])
 
-    def __currentState(self):
-        return __state
+    def currentState(self):
+        return self.__state
     
     #
     # Пауза
@@ -250,17 +243,29 @@ class OngoingGameServer:
         return not(self.__pause)
     #
     #
-        
+    
     # Создает игроков
     def __createPlayers(self):
-        self.__player.append(self.__createPlayer(0,"AI",1,[0], True))
-        self.__player.append(self.__createPlayer(1,"AI",1,[1],False))
-        self.__player.append(self.__createPlayer(2,"AI",1,[2],False))
-        self.__player.append(self.__createPlayer(3,"AI",1,[3],False))
+        self.__createPlayer(0,"AI",1,[0,4], True)
+        self.__createPlayer(1,"AI",1,[1,4],False)
+        self.__createPlayer(2,"AI",1,[2,3,4],False)
+        self.__createPlayer(3,"AI",1,[2,3,4],False)
+        self.__createPlayer(4,"AI",1,[4],False)
+        print("added")
         
     # Создает игрока
     def __createPlayer(self, pid, controller, color, team, pawndirection=False):
-        return self.__noChessPlayer(pid, controller, color, team, pawndirection)
+        pl = self.__noChessPlayer(pid, controller, color, team, pawndirection)
+        self.__player.append(pl)
+        print("add"+str(pid))
+        for i in range(2):
+            for p in self.__piecetypes:
+                pl.upgrades[i].append(0)
+                if p == "king":
+                    pl.piecesnum[i].append(1)
+                else:
+                    pl.piecesnum[i].append(0)
+        return pl
 
     def __owningPlayer(self,piece):
         return self.__player[piece.ownerid]
@@ -280,6 +285,9 @@ class OngoingGameServer:
             self.team = team
             self.onpassan = []
             self.premoves = []
+            self.gold = [500,500] # 0 - перед раундом, 1 - в начале
+            self.upgrades = [[],[]] # 0 - перед раундом, 1 - в начале
+            self.piecesnum = [[],[]] # 0 - перед раундом, 1 - в начале
             
         def addOnpassan(self,piece,squeres):
             self.onpassan.append(piece)
@@ -298,13 +306,6 @@ class OngoingGameServer:
         def clearPremoves(self):
             self.onpassan.clear()
             
-        def changeController(self, controller):
-            if self.controller != controller:
-                self.controller = controller
-                return True
-            else:
-                return False
-
         def changeColor(self, color):
             self.color = color
 
@@ -313,55 +314,185 @@ class OngoingGameServer:
             
         def __del__(self):
             print("player deleted")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def __playerPrepAddPiece(self, pid):
+        return True
+        
+    def __playerPrepRemovePiece(self, pid, squereindex):
+        if self.__isIndexInDeck(squereindex):
+            if not(self.__isDestEmpty(squereindex)):
+                if self.__indexToPiece(squereindex).ownerid==pid:
+                    return self.__removePiece(self.__indexToPiece(squereindex))
+                else:
+                    print("Wrong ownership, __playerPrepRemovePiece")
+                    return False
+            else:
+                print("Dest is not empty, __playerPrepRemovePiece")
+                return False
+        else:
+            print("Index is not in deck, __playerPrepRemovePiece")
+            return False
+
+    def __playerPrepDrop(self, pid):
+        return True
+
+
+
+
+
+
+
+
+    def __dummyfornow(self):
+        self.__createPieceTypes(("lesserPawn","pawn",
+                                 "lesserRock","rock",
+                                 "lesserKnight","knight",
+                                 "lesserBishop","bishop",
+                                 "queen","king"),
+                                ("Сердечко","Пешка",
+                                 "Лодка","Ладья",
+                                 "Собака","Конь",
+                                 "Вор","Слон",
+                                 "Королева","Король"),
+                                (1,3,
+                                 10,10,
+                                 6,6,
+                                 8,7,
+                                 16,20),
+                                (3,1,
+                                 2,2,
+                                 3,3,
+                                 4,4,
+                                 10,2),
+                                ("none","none",
+                                 "none","none",
+                                 "none","none",
+                                 "none","none",
+                                 "none","none"),
+                                (True,True,
+                                 True,True,
+                                 True,True,
+                                 True,True,
+                                 True,False)
+                                )
+        
+    def __createPieceTypes(self,gamenames,displaynames,pcosts,ucosts,movefuncs,purchs):
+        for i in range(len(gamenames)):
+            self.__createPieceType(gamenames[i],displaynames[i],pcosts[i],ucosts[i],movefuncs[i],purchs[i])
+        
+    def __createPieceType(self,ptgamename,ptdisplayname,ptpiececost,ptupgradecost,movefunction,ispurchasable):
+        if self.__ptids<100:
+            if len(ptgamename)<=20:
+                if len(ptdisplayname)<=20:
+                    pt = self.__noPieceType(self.__ptids,ptgamename,ptdisplayname,ptpiececost,ptupgradecost,movefunction,ispurchasable)
+                    self.__ptids += 1
+                    self.__piecetypes.append(pt)
+                    return pt
+                else:
+                    print("Too long ptdisplayname, __createPieceType")
+                    return False
+            else:
+                print("Too long ptgamename, __createPieceType")
+                return False
+        else:
+            print("Too much ptids, __createPieceType")
+            return False
+            
+        
+    class __noPieceType: # Класс типа фигуры
+        def __init__(self, ptid, ptgamename, ptdisplayname, ptpiececost, ptupgradecost, movefunction, ispurchasable):
+            self.id = ptid
+            self.type = ptgamename
+            self.name = ptdisplayname
+            self.cost = ptpiececost
+            self.upgrade = ptupgradecost
+            self.movefunction = movefunction
+            self.purchasable = ispurchasable
+            
+
         
     
     # Создает фигуру
-    def __createPiece(self, piecetype, ownerid, coord=0, index=-1, ability=True, pawndirection=False):
-        if (piecetype in self.__piecetypes) and (self.__isCoordValuable(coord) or self.__isIndexValuable(index)) and(ownerid>=0 and ownerid<=4):
+    def __createPiece(self, ptp, ownerid, coord=0, index=-1, ability=True):
+        if type(ptp)==str:
+            ptid = -1
+            for pt in self.__piecetypes:
+                if ptp in (pt.type,pt.name):
+                    ptid = pt.id
+            if ptid<0:
+                print("No such piece-type, __createPiece")
+                return False
+        elif type(ptp)!=int:
+            print("Type is not int or str, __createPiece")
+            return False
+        else:
+            ptid = ptp
+        
+        if (ptid<self.__ptids) and (self.__isCoordValuable(coord) or self.__isIndexValuable(index)) and(ownerid>=0 and ownerid<=4):
             if self.__isCoordValuable(coord) and (self.__isDestEmpty(coord)):
-                piece = self.__noChessPiece(self.__piecenames[piecetype], piecetype, ownerid, coord, self.__coordToIndex(coord), ability, pawndirection)
+                #print("self.__player[ownerid].pawndirection type is "+str(type(self.__player[ownerid].pawndirection)))
+                #print("ptid = "+str(ptid)+", type is "+str(type(ptid)))
+                piece = self.__noChessPiece(self.__pids, ptid, self.__piecetypes[ptid], ownerid, coord, self.__coordToIndex(coord), ability, self.__player[ownerid].pawndirection)
                 # Создаём фигуру
+                self.__pids +=self.__pids
                 self.__addPieceToDest(piece, coord) # Добавляем фигуру на доску
                 self.__pieces.append(piece) # Добавляем фигуру в список фигур
                 return piece
                 
             elif self.__isIndexValuable(index) and (self.__indexToPiece(index)==[]):
-                piece = self.__noChessPiece(self.__piecenames[piecetype], piecetype, ownerid, self.__indexToCoord(index), index, ability, pawndirection)
+                piece = self.__noChessPiece(self.__pids, ptid, self.__piecetypes[ptid], ownerid, self.__indexToCoord(index), index, ability, self.__player[ownerid].pawndirection)
                 # Создаём фигуру
+                self.__pids +=self.__pids
                 self.__addPieceToDest(piece, index) # Добавляем фигуру на доску
                 self.__pieces.append(piece) # Добавляем фигуру в список фигур
                 return piece
 
             else:
-                print("an error with placement of a new piece")
-                return -1
+                print("an error with placement of a new piece, __createPiece")
+                return False
                  
         else:
-            print("an error with atributes of a new piece")
-            return -1
+            print("an error with atributes of a new piece, __createPiece")
+            return False
 
     # Удаляет фигуру
     def __removePiece(self, piece, dest):
         if type(piece)==self.__noChessPiece:
             self.__removePieceFromDest(piece, dest)
             piece.kill()
-            return 0
+            return True
         else:
             print("an error with removing piece, removePiece, type is "+str(type(piece)))
-            return -1
+            return False
         
     class __noChessPiece: # Класс фигуры
-        def __init__(self, piecename, piecetype, ownerid, coord, index, ability=True, pawndirection=False):
+        def __init__(self, pids, ptid, ptype, ownerid, coord, index, ability=True, pawndirection=False):
+            self.id = pids
+            pids += 1
 
-            self.name = piecename # Имя фигуры
-            self.piecetype = piecetype # Тип
-            self.piecetypefirst = piecetype # Изначальный тип фигуры
+            self.alive = True
+            self.ptid = ptid # ID типа фигуры
+            self.type = ptype # Тип фигуры
+            self.oldptid = ptid # Изначальный ID типа фигуры
+            self.oldtype = ptype # Изначальный тип фигуры
+            self.ownerid = ownerid # Индекс владельца, к примеру 1
             self.coord = coord # Точка на доске, к примеру H8
             self.index = index # Индекс точки, к примеру 63
-            self.ownerid = ownerid # Индекс владельца, к примеру 1
             self.ability = ability # Наличие уникального хода, к примеру рокировка
             self.lastmove = "none" # Последнее действие, используется другими фигурами
-
             self.pawndirection = pawndirection # Направление движения (только для фигур-пешек)
             # Где True означает наверх, а False - вниз
 
@@ -372,6 +503,10 @@ class OngoingGameServer:
             self.lastmove = "promote"
             
         def kill(self): # Вызов деструктора
+            print("piece kinda died")
+            self.alive = False
+            
+        def delete(self):
             self.__del__()
             
         def __del__(self):
@@ -939,7 +1074,8 @@ class OngoingGameServer:
         return self.__incodetable[0][index//len(self.__incodetable[0])]+self.__incodetable[0][index%len(self.__incodetable[0])]
         
     def __incode(self, desk, coord, piece, player, movequere, currentmove):
-        allstr = []
+        allstr = []                             
+        allstr.append(self.__cti(self.__state)) # Состояние сервера
         allstr.append(self.__cti(len(desk[0]))) # Параметры доски
         allstr.append(self.__cti(len(desk[1])))
         allstr.append(self.__incodetable[2][0]) # ---Далее---
@@ -950,37 +1086,43 @@ class OngoingGameServer:
         allstr.append(self.__incodetable[2][0]) # ---Далее---
         
         for s in piece: # Фигуры доски
-            allstr.append(self.__cti(self.__piecetypes.index(s.piecetype)))
-            allstr.append(self.__cti(self.__piecetypes.index(s.piecetypefirst)))
-            allstr.append(self.__cti(s.index))
-            allstr.append(self.__cti(s.ownerid))
-            allstr.append(self.__cti(int(s.ability)))
-            allstr.append(self.__cti(self.__lastmoves.index(s.lastmove)))
-            allstr.append(self.__cti(int(s.pawndirection)))
+            allstr.append(self.__cti(s.id)) # ID фигуры
+            allstr.append(self.__cti(s.ptid)) # Тип фигуры
+            allstr.append(self.__cti(s.oldptid)) # Изначальный тип фигуры
+            allstr.append(self.__cti(s.index)) # Индекс клетки
+            allstr.append(self.__cti(s.ownerid)) # Номер владельца
+            allstr.append(self.__cti(int(s.ability))) # Способность
+            allstr.append(self.__cti(self.__lastmoves.index(s.lastmove))) # Ласт ход
+            allstr.append(self.__cti(int(s.pawndirection))) # Направление фигуры
             allstr.append(self.__incodetable[2][1]) # --Следующая фигура--
         allstr.append(self.__incodetable[2][0]) # ---Далее---
         
         for s in player: # Параметры игроков
-            allstr.append(self.__cti(s.id))
-            if s.controller=="AI":
+            allstr.append(self.__cti(s.id)) # ID игрока
+            if s.controller=="AI": # Контроллер
                 allstr.append(self.__cti(s.controller))
             else:
                 allstr.append(self.__cti(-1))
-            allstr.append(self.__cti(s.color))
-            allstr.append(self.__cti(s.pawndirection))
+            allstr.append(self.__cti(s.color)) # Цвет
+            allstr.append(self.__cti(s.pawndirection)) # Направление пешек
             for t in s.team: # Команда
                 allstr.append(self.__cti(int(t)))
             allstr.append(self.__incodetable[2][2]) # Конец атрибута команда
-            if len(s.onpassan)!=0: # Взятие на проходе
+            if len(s.onpassan)>0: # Взятие на проходе
                 allstr.append(self.__cti(self.pieces.index(s.onpassan[0])))
                 for t in s.onpassan[1]:
                     allstr.append(self.__cti(t))
             allstr.append(self.__incodetable[2][2]) # Конец атрибута на проходе
+            allstr.append(self.__cti(s.gold[1])) # Золото 1
+            for t in range(len(s.piecesnum[1])): # Войска
+                allstr.append(self.__cti(s.piecesnum[1][t]))
+                allstr.append(self.__cti(s.upgrades[1][t]))
+            allstr.append(self.__incodetable[2][2]) # Конец атрибута армия-золото
             allstr.append(self.__incodetable[2][1]) # --Следующий игрок--
         allstr.append(self.__incodetable[3][0]) # --Конец сообщения--
 
         return "".join(allstr)
-    
+
     def __addObjectsToServerClass(self):
         self.__server.objects = self.__incode(self.__desk,
                                               self.__coordToIndexAndPieces,
@@ -1039,10 +1181,10 @@ class OngoingGameServer:
         while True:
 
             
-            while self.__server.newCommands != []:
-                order = self.__server.newCommands[0]
-                self.__server.newCommands.remove(order)
-                print ("order "+str(order)+" "+str(self.__executeOrder(order)))
+            while len(self.__server.newCommands) > 0:
+                order = self.__server.newCommands.pop(0)
+                #self.__executeOrder(order)
+                #print ("order "+str(order)+" "+str(self.__executeOrder(order)))
 
             p = self.__player[self.__movequeue[self.__currentmove]]
             if len(p.premoves)>0:
@@ -1064,10 +1206,10 @@ class OngoingGameServer:
 if __name__ == "__main__":
      
     print("game input host adress (it uses localhost if left empty)")
-    HOST = input()# Адрес сервера
-    HOST = "localhost" if HOST=="" else HOST
+    #HOST = input()# Адрес сервера
+    HOST = "localhost" #if HOST=="" else HOST
     print("game input host port (it uses 8080 if left empty)")
-    PORT = input()# Порт сервера
-    PORT = 8080 if PORT=="" else int(PORT)
+    #PORT = input()# Порт сервера
+    PORT = 8080 #if PORT=="" else int(PORT)
             
-    ongoingGameClient = OngoingGameClient((HOST, PORT),join=False) # Создаем объект клиента
+    ongoingGameServer = OngoingGameServer((HOST, PORT)) # Создаем объект клиента

@@ -90,17 +90,19 @@ class OngoingGameWindow():
 
 if __name__ == "__main__":
     print("game input host adress (it uses localhost if left empty)")
-    HOST = input()# Адрес сервера
-    HOST = "localhost" if HOST=="" else HOST
+    #HOST = input()# Адрес сервера
+    #HOST = "localhost" if HOST=="" else HOST
     print("game input host port (it uses 8080 if left empty)")
-    PORT = input()# Порт сервера
-    PORT = 8080 if PORT=="" else int(PORT)
+    #PORT = input()# Порт сервера
+    #PORT = 8080 if PORT=="" else int(PORT)
+    HOST = "localhost"
+    PORT = 8080
 
     myWindow=pygame.display.set_mode((800,600))
     MyOngoingGameWindow = OngoingGameWindow(screen=myWindow)
     # Создаем объект клиента
 
-    MyOngoingGameClient = OngoingGameClient((HOST, PORT),join=False,screen=MyOngoingGameWindow.screen)
+    MyOngoingGameClient = OngoingGameClient((HOST, PORT),join=False)
     # Создаем объект клиента
 
     
