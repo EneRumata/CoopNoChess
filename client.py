@@ -18,11 +18,41 @@ class Client:
             
         self.objects = [] # Создаем массив для хранения данных об объектах
 
+        self.last_json_errors = ""
+            
         Thread(target=self.__getObjects).start()
         # Делаем новый поток с циклом, в которым берем данные об игроках
 
     def __jsonFixError(self):# Преобразовывает байтовую строку в текст и исправляет ошибки
-        self.__data="["+self.__data.decode('utf-8')+"]"
+        d = self.__data.decode('utf-8')
+        s = [[],[]]
+        if d[0]!="{":
+            i = 0
+            while d[i]!="}" or i>=len(d):
+                s[0].append(d[i])
+                i += 1
+            s[0].append(d[i])
+            s[0] = "".join(s[0])
+            res = self.last_json_errors + s[0]
+            if res[0]=="{" and res[-1]=="}":
+                d = self.last_json_errors + d
+                
+        if d[-1]!="}":
+            i = 0
+            while d[-1-i]!="{" or i>=len(d):
+                s[1].append(d[-1-i])
+                i += 1
+            s[1].append(d[-1-i])
+            s[1].reverse()
+            s[1] = "".join(s[1])
+            self.last_json_errors = s[1]
+            d = d[:(len(d)-i-1)]
+            if self.last_json_errors[0]=="{" and self.last_json_errors[-1]=="}":
+                d = self.last_json_errors[0] + d
+        else:
+            self.last_json_errors = ""
+                
+        self.__data="["+d+"]"
         i = 2
         while i<len(self.__data)-1:
             if self.__data[i]=="}" and self.__data[i+1]=="{":
@@ -40,7 +70,7 @@ class Client:
                 s =self.send.pop(0)
                 self.__conn.sendall(bytes(json.dumps(s), 'UTF-8'))
             
-            self.__data.clear()
+            self.__data = ""
             self.__data = self.__conn.recv(1024) # ждем запросов от клиента
 
             if not self.__data: # если запросы перестали поступать, то ждём несколько итераций
@@ -54,15 +84,29 @@ class Client:
 
                 self.__jsonFixError()
 
-                # загружаем данные в json формате
-                self.__data = json.loads(self.__data)
-                #print(type(self.__data))
-                for d in self.__data:
-                    cmd = d["request"]
-                    if cmd == "set_objects": # Запрос данных
-                        self.newCommands.append({"command":"set_objects","server_objects":d["response"]})
-                    elif cmd == "premove_result":
-                        self.newCommands.append({"command":"premove_result","result":d["response"]})
+                tried = True
+                try:
+                    self.__data = json.loads(self.__data)
+                except:
+                    #print("last_json_errors=")
+                    #print(self.last_json_errors)
+                    print("data=")
+                    print(self.__data)
+                    print("json.loads(self.__data) exception occurred, __getObjects ")
+                    tried = False
+                    #return False
+
+                if tried:
+                    for d in self.__data:
+                        cmd = d["request"]
+                        if cmd == "set_objects": # Запрос данных
+                            self.newCommands.append({"command":"set_objects","server_objects":d["response"]})
+                        elif cmd == "set_interface":
+                            self.newCommands.append({"command":"set_interface","server_interface":d["response"]})
+                        elif cmd == "add_text":
+                            self.newCommands.append({"command":"add_text","new_text":d["response"]})
+                        elif cmd == "premove_result":
+                            self.newCommands.append({"command":"premove_result","result":d["response"]})
 
 
 if __name__ == "__main__":

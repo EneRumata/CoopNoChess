@@ -11,7 +11,7 @@ class OngoingGameWindow():
         else:
             self.screen=pygame.Surface((512, 512))
             screen.blit(self.screen,(288,0))
-                
+            
         # Загружаем спрайты
 
         # imagePath: пути к папкам со спрайтами

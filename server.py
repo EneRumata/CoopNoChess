@@ -11,8 +11,8 @@ class Server:
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__sock.bind(addr) # запускаем сервер от заданного адреса
 
-        self.objects = ""
-
+        self.objects = ["","",[]]
+        
         self.__players = [] # создаем массив данных игроков на сервере
         
         self.__max_players = max_conn # максимум людей на сервере
@@ -34,10 +34,40 @@ class Server:
             self.__data = "" # Данные ответа на запрос
             self.send = [] # Команды для отправки клиенту
             
+            self.last_json_errors = ""
+            
             self.__thread = Thread(target=self.handleClientThreadPack, args=(self.__conn,)).start() # Запускаем в новом потоке проверку действий игрока
             
         def __jsonFixError(self):
-            self.__data="["+self.__data.decode('utf-8')+"]"
+            d = self.__data.decode('utf-8')
+            s = [[],[]]
+            if d[0]!="{":
+                i = 0
+                while d[i]!="}" or i>=len(d):
+                    s[0].append(d[i])
+                    i += 1
+                s[0].append(d[i])
+                s[0] = "".join(s[0])
+                res = self.last_json_errors + s[0]
+                if res[0]=="{" and res[-1]=="}":
+                    d = self.last_json_errors + d
+                    
+            if d[-1]!="}":
+                i = 0
+                while d[-1-i]!="{" or i>=len(d):
+                    s[1].append(d[-1-i])
+                    i += 1
+                s[1].append(d[-1-i])
+                s[1].reverse()
+                s[1] = "".join(s[1])
+                self.last_json_errors = s[1]
+                d = d[:(len(d)-i-1)]
+                if self.last_json_errors[0]=="{" and self.last_json_errors[-1]=="}":
+                    d = self.last_json_errors[0] + d
+            else:
+                self.last_json_errors = ""
+                    
+            self.__data="["+d+"]"
             i = 2
             while i<len(self.__data)-1:
                 if self.__data[i]=="}" and self.__data[i+1]=="{":
@@ -72,9 +102,12 @@ class Server:
                         cmd = d["request"]
                         if cmd == "get_objects": # Запрос данных
                             
-                            answer_to_objects = self.__parent.objects
+                            answer_to_objects = self.__parent.objects[0]
                             #print(answer_to_objects)
-                            self.__conn.sendall(bytes(json.dumps({"request": "set_objects", "response": answer_to_objects}), 'UTF-8'))
+                            self.__conn.sendall(bytes(json.dumps({"request": "set_objects", "response": self.__parent.objects[0]}), 'UTF-8'))
+                            self.__conn.sendall(bytes(json.dumps({"request": "set_interface", "response": self.__parent.objects[1]}), 'UTF-8'))
+                            for m in self.__parent.objects[2]:
+                                self.__conn.sendall(bytes(json.dumps({"request": "add_text", "response": m}), 'UTF-8'))
                         elif cmd == "move":
                             self.__parent.newCommands.append({"command":"move","move":d["move"],"id":self.id})
 
@@ -108,6 +141,7 @@ class Server:
                     newpack = self.__ClientThreadPack(self,conn,addr,len(self.__players))
                     self.__players.append(newpack)# добавляем его в массив игроков
                     self.newCommands.append({"command":"newcomer","id":newpack.id})
+                    self.newCommands.append({"command":"ready_on","id":newpack.id})
 
 
 if __name__ == "__main__":
