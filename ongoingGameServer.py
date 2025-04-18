@@ -17,7 +17,7 @@ class OngoingGameServer:
         self.__states = ("waiting_for_players","battle","preparation")
         self.__state = 0 # Состояние сервера
         self.__player = [] # Массив игроков
-        #self.__demoPieces = [] # Фигуры на стадии подготовки
+        #self.__demoPieces = [{},{}] # Фигуры на стадии подготовки
         self.__demoPieces = [{"a1":5,"a2":0,"b2":0},{}]
         self.__playerReady = [False,False] # Кнопка готов
         self.__playerSurrender = [False,False] # Кнопка сдаться
@@ -36,9 +36,7 @@ class OngoingGameServer:
         self.__movequeue = [0,1] # Очередь для ходов
         self.__currentmove = 0 # Текущий ход (индекс объекта self.__movequeue),
         # Где -1 означает ничей ход
-        self.__idcolor = ["grey","red","green","purple","brown","blue"]
-        self.__idcolorname = ["Серый","Красный","Зелёный","Бирюзовый","Коричневый","Голубой"]
-
+        
         # Максимальный размер доски, её строки и столбцы
         self.__initialdesk = (("a","b","c","d","e","f","g","h","i","j","k","l","m","n"),("1","2","3","4","5","6","7","8","9","10","11","12","13","14"))
         self.__desk = [[],[]] # Доска
@@ -49,23 +47,29 @@ class OngoingGameServer:
         self.__pids = 0
         self.__pieces = [] # Фигуры
 
-        self.__lastmoves = ("none","move","capture","ability")
+        #self.__lastmoves = ("none","move","capture","ability","promote")
         
         #
         #
         #
         #
         #
-
-        # Делаем новый поток с циклом, в которoм берем данные об игроках
-
         
         self.__createPieceTypes() # 1 - Создаём типы фигур
         self.__createPlayers() # 2 - Создаём игроков
         self.__createLevels() # 3 - Создаём уровни
 
+        #
+        #
+        #
+        #
+        #
+        # Делаем новый поток с циклом, в которoм берем данные об игроках
+
+
+
         if savefile=="none":
-            self.__firstBattle(self.__currentLVL)
+            self.__firstBattle()
         else:
             print("file!!!")
         
@@ -75,6 +79,27 @@ class OngoingGameServer:
 
 
 
+    def __printDeck(self): # Показывает доску в отладке
+        return True
+        s = [""]
+        n = 0
+        r = 0
+        for i in self.__coordToIndexAndPieces:
+            if self.__isDestEmpty(i):
+                s[r] += "  -  "
+            else:
+                s[r] += " " + str(self.__coordToPiece(i)[0].type.type[0:2])+str(self.__coordToPiece(i)[0].ownerid) + " "
+            n += 1
+            if n>7:
+                n = 0
+                r += 1
+                s.append("")
+        print("")
+        for i in range(7,-1,-1):
+            print("i="+str(i)+"   "+s[i])
+        print("")
+
+        
 
     #
     ##
@@ -118,155 +143,6 @@ class OngoingGameServer:
     
 
 
-    def __testmoves(self):
-        Ra1 = self.__pieces[0]
-        Kb1 = self.__pieces[1]
-        Bc1 = self.__pieces[2]
-        Qd1 = self.__pieces[3]
-        Le1 = self.__pieces[4]
-        lBf1 = self.__pieces[5]
-        Kg1 = self.__pieces[6]
-        Rh1 = self.__pieces[7]
-        
-        Pa2 = self.__pieces[8]
-        Pb2 = self.__pieces[9]
-        Pc2 = self.__pieces[10]
-        Pd2 = self.__pieces[11]
-        Pe2 = self.__pieces[12]
-        lPf2 = self.__pieces[13]
-        lPg2 = self.__pieces[14]
-        lPh2 = self.__pieces[15]
-
-        Ra8 = self.__pieces[16]
-        Kb8 = self.__pieces[17]
-        Bc8 = self.__pieces[18]
-        Qd8 = self.__pieces[19]
-        Le8 = self.__pieces[20]
-        lBf8 = self.__pieces[21]
-        Kg8 = self.__pieces[22]
-        Rh8 = self.__pieces[23]
-        
-        
-        Pa7 = self.__pieces[24]
-        Pb7 = self.__pieces[25]
-        Pc7 = self.__pieces[26]
-        Pd7 = self.__pieces[27]
-        Pe7 = self.__pieces[28]
-        lPf7 = self.__pieces[29]
-        lPg7 = self.__pieces[30]
-        lPh7 = self.__pieces[31]
-        
-        print("P e4 "+str(self.__TryPieceMove(Pe2,"e4",self.__coordToIndex("e4"))))
-        print("P e5 "+str(self.__TryPieceMove(Pe7,"e5",self.__coordToIndex("e5"))))
-        print("P d4 "+str(self.__TryPieceMove(Pd2,"d4",self.__coordToIndex("d4"))))
-        print("P d5 "+str(self.__TryPieceMove(Pd7,"d5",self.__coordToIndex("d5"))))
-        print("P e5 "+str(self.__TryPieceMove(Pd2,"e5",self.__coordToIndex("e5"))))
-        print("P e4 "+str(self.__TryPieceMove(Pd7,"e4",self.__coordToIndex("e4"))))
-
-        print("K c3 "+str(self.__TryPieceMove(Kb1,"c3",self.__coordToIndex("c3"))))
-        print("K c6 "+str(self.__TryPieceMove(Kb8,"c6",self.__coordToIndex("c6"))))
-
-        print("B e3 "+str(self.__TryPieceMove(Bc1,"e3",self.__coordToIndex("e3"))))
-        print("B c6 "+str(self.__TryPieceMove(Bc8,"e6",self.__coordToIndex("e6")))) 
-
-        print("Q e2 "+str(self.__TryPieceMove(Qd1,"e2",self.__coordToIndex("e2"))))
-        print("Q c7 "+str(self.__TryPieceMove(Qd8,"e7",self.__coordToIndex("e7")))) 
-
-        print("R a1 "+str(self.__TryPieceMove(Ra1,"e1",self.__coordToIndex("e1"))))
-        print("R a8 "+str(self.__TryPieceMove(Ra8,"e8",self.__coordToIndex("e8"))))
-        
-        print("lP g3 "+str(self.__TryPieceMove(lPg2,"g3",self.__coordToIndex("g3"))))
-        print("lP g6 "+str(self.__TryPieceMove(lPg7,"g6",self.__coordToIndex("g6"))))
-        print("lP g4 "+str(self.__TryPieceMove(lPg2,"g4",self.__coordToIndex("g4"))))
-        print("lP g5 "+str(self.__TryPieceMove(lPg7,"g5",self.__coordToIndex("g5"))))
-        print("lP g5 "+str(self.__TryPieceMove(lPg2,"g5",self.__coordToIndex("g5"))))
-        
-        print("lP h6 "+str(self.__TryPieceMove(lPh7,"h6",self.__coordToIndex("h6"))))
-        print("lP h3 "+str(self.__TryPieceMove(lPh2,"h3",self.__coordToIndex("h3"))))
-        print("lP h5 "+str(self.__TryPieceMove(lPh7,"h5",self.__coordToIndex("h5"))))
-        print("lP h4 "+str(self.__TryPieceMove(lPh2,"h4",self.__coordToIndex("h4"))))
-        print("lP h5 "+str(self.__TryPieceMove(lPh7,"h4",self.__coordToIndex("h4"))))
-              
-        print("lP h5 "+str(self.__TryPieceMove(lPg2,"h5",self.__coordToIndex("h5"))))
-        print("lP a5 "+str(self.__TryPieceMove(lPh7,"a5",self.__coordToIndex("a5"))))
-        
-        print("lP f3 "+str(self.__TryPieceMove(lPf2,"f3",self.__coordToIndex("f3"))))
-        print("lP f6 "+str(self.__TryPieceMove(lPf7,"f6",self.__coordToIndex("f6"))))
-        print("lP f4 "+str(self.__TryPieceMove(lPf2,"f4",self.__coordToIndex("f4"))))
-        print("lP f5 "+str(self.__TryPieceMove(lPf7,"f5",self.__coordToIndex("f5"))))
-        print("lP f5 "+str(self.__TryPieceMove(lPf2,"f5",self.__coordToIndex("f5"))))
-
-        print("lB g2 "+str(self.__TryPieceMove(lBf1,"g2",self.__coordToIndex("g2"))))
-        print("lB g7 "+str(self.__TryPieceMove(lBf8,"g7",self.__coordToIndex("g7"))))
-        print("lB f3 "+str(self.__TryPieceMove(lBf1,"f3",self.__coordToIndex("f3"))))
-        print("lB f6 "+str(self.__TryPieceMove(lBf8,"f6",self.__coordToIndex("f6"))))
-        print("lB d5 "+str(self.__TryPieceMove(lBf1,"d5",self.__coordToIndex("d5"))))
-        print("lB d4 "+str(self.__TryPieceMove(lBf8,"d4",self.__coordToIndex("d4"))))
-        print("lB g8 "+str(self.__TryPieceMove(lBf1,"g8",self.__coordToIndex("g8"))))
-        print("lB g1 "+str(self.__TryPieceMove(lBf8,"g1",self.__coordToIndex("g1"))))
-        
-    def __printDeck(self): # Показывает доску в отладке
-        return True
-        s = [""]
-        n = 0
-        r = 0
-        for i in self.__coordToIndexAndPieces:
-            if self.__isDestEmpty(i):
-                s[r] += "  -  "
-            else:
-                s[r] += " " + str(self.__coordToPiece(i)[0].type.type[0:2])+str(self.__coordToPiece(i)[0].ownerid) + " "
-            n += 1
-            if n>7:
-                n = 0
-                r += 1
-                s.append("")
-        print("")
-        for i in range(7,-1,-1):
-            print("i="+str(i)+"   "+s[i])
-        print("")
-        
-    def __createDefaultPieces(self): # Создаёт набор стандартных фигур для игроков 0 и 1
-        for new in (("rock",0,"a1"),
-                    ("knight",0,"b1"),
-                    ("bishop",0,"c1"),
-                    ("queen",0,"d1"),
-                    ("king",0,"e1"),
-                    ("bee",0,"f1"),
-                    ("knight",0,"g1"),
-                    ("rock",0,"h1"),
-                    
-                    ("pawn",0,"a2"),
-                    ("pawn",0,"b2"),
-                    ("pawn",0,"c2"),
-                    ("pawn",0,"d2"),
-                    ("pawn",0,"e2"),
-                    ("ram",0,"f2"),
-                    ("ram",0,"g2"),
-                    ("ram",0,"h2"),
-                    
-                    ("rock",1,"a8"),
-                    ("knight",1,"b8"),
-                    ("bishop",1,"c8"),
-                    ("queen",1,"d8"),
-                    ("king",1,"e8"),
-                    ("bee",1,"f8"),
-                    ("knight",1,"g8"),
-                    ("rock",1,"h8"),
-                    
-                    ("pawn",1,"a7"),
-                    ("pawn",1,"b7"),
-                    ("pawn",1,"c7"),
-                    ("pawn",1,"d7"),
-                    ("pawn",1,"e7"),
-                    ("ram",1,"f7"),
-                    ("ram",1,"g7"),
-                    ("ram",1,"h7"),
-                    ):
-            newpiece = self.__createPiece(new[0],new[1],coord=new[2])
-
-    def currentState(self):
-        return self.__state
-    
     #
     # Пауза
     def __setPause(self,pause):
@@ -300,13 +176,11 @@ class OngoingGameServer:
         self.__createPlayer(2,"AI",1,[2,3,4],False)
         self.__createPlayer(3,"AI",1,[2,3,4],False)
         self.__createPlayer(4,"AI",1,[4],False)
-        print("added")
         
     # Создает игрока
     def __createPlayer(self, pid, controller, color, team, pawndirection=False):
         pl = self.__noChessPlayer(pid, controller, color, team, pawndirection)
         self.__player.append(pl)
-        print("add"+str(pid))
         for i in range(2):
             for p in self.__piecetypes:
                 pl.upgrades[i].append(0)
@@ -314,7 +188,6 @@ class OngoingGameServer:
                     pl.piecesnum[i].append(1)
                 else:
                     pl.piecesnum[i].append(0)
-        #print("pl.upgrades = "+str(pl.upgrades)+", pl.piecesnum = "+str(pl.piecesnum))
         return pl
 
     def __owningPlayer(self,piece):
@@ -330,6 +203,7 @@ class OngoingGameServer:
     class __noChessPlayer: # Класс игрока
         def __init__(self, pid, controller, color, team, pawndirection=False):
             self.id = pid
+            self.name = "Игрок "+str(pid)
             self.controller = controller
             self.color = color
             self.pawndirection = pawndirection
@@ -384,11 +258,9 @@ class OngoingGameServer:
             self.__textChat[0] -= 1
             self.__textChat.pop(1)
 
-    def __firstBattle(self, lvl):
+    def __firstBattle(self):
         self.__state = 1 # Состояние сервера - Подготовка
         self.__initLevel(self.__currentLVL)
-        #self.__testmoves() # Тестовые ходы
-        self.__printDeck() # Выводит доску в консоль
         return True
         
     
@@ -596,7 +468,7 @@ class OngoingGameServer:
                     pt = self.__noPieceType(self.__ptids,ptgamename,ptdisplayname,ptpiececost,ptupgradecost,function,ispurchasable)
                     self.__ptids += 1
                     self.__piecetypes.append(pt)
-                    print("type is "+str(pt.type))
+                    #print("type is "+str(pt.type))
                     return pt
                 else:
                     print("Too long ptdisplayname, __createPieceType")
@@ -710,7 +582,7 @@ class OngoingGameServer:
             self.coord = coord # Точка на доске, к примеру H8
             self.index = index # Индекс точки, к примеру 63
             self.ability = ability # Наличие уникального хода, к примеру рокировка
-            self.lastmove = "none" # Последнее действие, используется другими фигурами
+            self.lastmove = 0 # Последнее действие, используется другими фигурами
             self.pawndirection = pawndirection # Направление движения (только для фигур-пешек)
             # Где True означает наверх, а False - вниз
 
@@ -718,7 +590,7 @@ class OngoingGameServer:
             self.piecetype = newtype
             self.name = newname
             self.ability = False
-            self.lastmove = "promote"
+            self.lastmove = 4
             
         def kill(self): # Вызов деструктора
             print("piece kinda died")
@@ -747,7 +619,6 @@ class OngoingGameServer:
         return (index>0 and index<(len(self.__desk[0])*len(self.__desk[1])))
         
     def __isPieceAlly(self, piece1, piece2): # Союзная ли фигура
-        #print("id"+str(piece2.ownerid)+", self.__owningPlayer(piece1).team "+str(self.__owningPlayer(piece1).team))
         return  piece2.ownerid in self.__owningPlayer(piece1).team
         
     def __isCoordValuable(self, coord):
@@ -763,13 +634,11 @@ class OngoingGameServer:
         return self.__indexToCoordAndPieces[index][0]
     
     def __coordToPiece(self, coord):
-        #print("coord="+str(coord)+",l="+str(len(self.__coordToIndexAndPieces[coord][1])))
-        answer = self.__coordToIndexAndPieces[coord][1] #if (len(self.__coordToIndexAndPieces[coord][1])>0) else False
+        answer = self.__coordToIndexAndPieces[coord][1]
         return answer
     
     def __indexToPiece(self, index):
-        #print("index="+str(index)+",l="+str(len(self.__indexToCoordAndPieces[index][1])))
-        answer = self.__indexToCoordAndPieces[index][1] #if (len(self.__indexToCoordAndPieces[index][1])>0) else False
+        answer = self.__indexToCoordAndPieces[index][1]
         return answer
 
     def __isDestEmpty(self, dest):
@@ -865,10 +734,10 @@ class OngoingGameServer:
                         print("an error with index dest of the square, movePieceToDest")
                         return False
                 if self.__isDestEmpty(dest):
-                    piece.lastmove = "move"
+                    piece.lastmove = 1
                 else:
                     if (not(self.__isPieceAlly(piece,self.__coordToPiece(coord)[0]))):
-                        piece.lastmove = "capture"
+                        piece.lastmove = 2
                         self.__removePiece(self.__coordToPiece(coord)[0],dest)
                     else:
                         print("an error with dest of the square (ally), movePieceToDest")
@@ -1115,7 +984,7 @@ class OngoingGameServer:
             if self.__isDestEmpty(index) or not(self.__isPieceAlly(piece,self.__indexToPiece(index)[0])):
                 self.__movePieceToDest(piece, index)
                 return True
-            if piece.ability and self.__indexToPiece(index)[0].ability and self.__indexToPiece(index)[0].piecetype=="rock":
+            if piece.ability and self.__indexToPiece(index)[0].lastmove==0 and self.__indexToPiece(index)[0].piecetype=="rock":
                 if self.__isDestEmpty(index+diff):
                     if (b==0 and (coord[0]+a in self.__desk[0])) or (a==0 and (coord[1:]+b in self.__desk[1])):
                         self.__movePieceToDest(piece, index+diff, external=True)
@@ -1307,6 +1176,10 @@ class OngoingGameServer:
             allstr.append(m[1]) # Сообщение игрока
             allstr.append(self.__incodetable[2][1]) # --Следующий чат--
         chat[0] = len(chat)
+        allstr.append(self.__incodetable[2][0]) # ---Далее--- 
+        allstr.append(self.__player[0].name) # Номер игрока
+        allstr.append(self.__incodetable[2][0]) # ---Далее--- 
+        allstr.append(self.__player[1].name) # Номер игрока
         allstr.append(self.__incodetable[3][0]) # ---Конец сообщения--- 
 
         return "".join(allstr)
@@ -1338,7 +1211,8 @@ class OngoingGameServer:
         
     def __incodeObj(self, desk, coord, piece, player, movequere, currentmove):
         allstr = []                             
-        allstr.append(self.__cti(self.__state)) # Состояние сервера
+        allstr.append(self.__cti(self.__state)) # Состояние сервера                           
+        allstr.append(self.__cti(self.__currentLVL)) # Уровень
         allstr.append(self.__cti(len(desk[0]))) # Параметры доски
         allstr.append(self.__cti(len(desk[1])))
         allstr.append(self.__incodetable[2][0]) # ---Далее---
@@ -1355,8 +1229,9 @@ class OngoingGameServer:
             allstr.append(self.__cti(s.index)) # Индекс клетки
             allstr.append(self.__cti(s.ownerid)) # Номер владельца
             allstr.append(self.__cti(int(s.ability))) # Способность
-            allstr.append(self.__cti(self.__lastmoves.index(s.lastmove))) # Ласт ход
+            allstr.append(self.__cti(s.lastmove)) # Ласт ход
             allstr.append(self.__cti(int(s.pawndirection))) # Направление фигуры
+            allstr.append(self.__cti(int(s.alive))) # Жив ли
             allstr.append(self.__incodetable[2][1]) # --Следующая фигура--
         allstr.append(self.__incodetable[2][0]) # ---Далее---
         
@@ -1380,6 +1255,8 @@ class OngoingGameServer:
             for t in range(len(s.piecesnum[1])): # Войска
                 allstr.append(self.__cti(s.piecesnum[1][t]))
                 allstr.append(self.__cti(s.upgrades[1][t]))
+                allstr.append(self.__cti(s.piecesnum[0][t]))
+                allstr.append(self.__cti(s.upgrades[0][t]))
             allstr.append(self.__incodetable[2][2]) # Конец атрибута армия-золото
             allstr.append(self.__incodetable[2][1]) # --Следующий игрок--
         allstr.append(self.__incodetable[3][0]) # --Конец сообщения--
