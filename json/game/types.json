@@ -1,0 +1,61 @@
+{
+    "types":
+    {
+        "pawn":
+        {
+            "name": "Пешка",
+            "piececost": 2,
+            "upgradecost": 2,
+            "ispurchasable": true
+        },
+        "rock":
+		{
+            "name": "Ладья",
+            "piececost": 10,
+            "upgradecost": 2,
+            "ispurchasable": true
+        },
+        "knight":
+        {
+            "name": "Конь",
+            "piececost": 6,
+            "upgradecost": 3,
+            "ispurchasable": true
+        },
+        "bishop":
+        {
+            "name": "Слон",
+            "piececost": 6,
+            "upgradecost": 3,
+            "ispurchasable": true
+        },
+        "queen":
+        {
+            "name": "Королева",
+            "piececost": 6,
+            "upgradecost": 3,
+            "ispurchasable": true
+        },
+        "king":
+        {
+            "name": "Король",
+            "piececost": 6,
+            "upgradecost": 3,
+            "ispurchasable": false
+        },
+        "ram":
+        {
+            "name": "Таран",
+            "piececost": 1,
+            "upgradecost": 3,
+            "ispurchasable": true
+        },
+        "bee":
+        {
+            "name": "Пчела",
+            "piececost": 7,
+            "upgradecost": 3,
+            "ispurchasable": true
+        }
+    }
+}
