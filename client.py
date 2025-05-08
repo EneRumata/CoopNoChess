@@ -88,13 +88,10 @@ class Client:
                 try:
                     self.__data = json.loads(self.__data)
                 except:
-                    #print("last_json_errors=")
-                    #print(self.last_json_errors)
                     print("data=")
                     print(self.__data)
                     print("json.loads(self.__data) exception occurred, __getObjects ")
                     tried = False
-                    #return False
 
                 if tried:
                     for d in self.__data:
