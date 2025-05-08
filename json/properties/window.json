@@ -1,0 +1,16 @@
+{
+	"resolution":
+	{
+		"800,600": 
+		{
+			"resolution": [800,600],
+			"offset": 12,
+			"buttonwidth": 100,
+			"buttonheight": 25,
+			"font": null,
+			"fontScale": 22,
+			"fontOffset": 4,
+			"wColor":"orange"
+		}
+	}
+}
