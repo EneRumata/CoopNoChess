@@ -1,0 +1,41 @@
+{
+	"info":
+	{
+		"w": "Перевод служебных строк в настоящие, по сути файл локализации"
+	},
+    "short":
+    {
+        "<": "<",
+        ">": ">",
+        "<>": "<>",
+        "-": "-",
+        "=": "=",
+        "+": "+",
+        "play": "играть",
+        "quit": "отключиться",
+        "addnametext": "имя игры",
+        "addnameinput": "новая игра",
+        "addiptext": "IP сервера",
+        "addipinput": "localhost",
+        "addporttext": "порт сервера",
+        "addportinput": "8080",
+        "joinnametext": "имя игры",
+        "joinnameinput": "новая игра",
+        "joiniptext": "IP сервера",
+        "joinipinput": "localhost",
+        "joinporttext": "порт сервера",
+        "joinportinput": "8080",
+        "newgame": "новая игра",
+        "loadgame": "загрузить игру",
+        "joingame": "присоединиться",
+        "humanplayerstext": "игроки",
+        "aiplayerstext": "компьютер",
+        "opened": "Открыто",
+        "closed": "Закрыто",
+        "aieasy": "ИИ лёгкий",
+        "ainormal": "ИИ средний",
+        "aihard": "ИИ тяжёлый",
+        "startgame": "начать",
+        "cancelgame": "отменить"
+    }
+}

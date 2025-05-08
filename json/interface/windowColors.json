@@ -1,0 +1,53 @@
+{
+	"info":
+	{
+		"w": "mainlayer nearboundaries middleboundaries boundaries       text",
+		"h1": "button FF, FT, TF, TT, textbox FF, FT, TF, TT",
+		"h2": "layer, textlayer",
+		"h3": "dbbutton, dbitem, dblayer, slider, slbutton, dbutton",
+		"h3": "ALWAYS leave 0 at the start and at the end of boundaries"
+	},
+    "colors":
+    {
+        "orange": 
+		{
+			"boundaries":[0,1,1,1,0],
+			"codes":
+			{
+				"lightgreen":[218,255,117],
+				"middlegreen":[ 21,243,84],
+				"middleorange":[243,211,84],
+				"lightgrey":[195,195,195],
+				"middlegrey":[106,106,106],
+				"darkgrey":[ 36, 36, 36],
+				
+				"lightred":[232,182,140],
+				"darkred":[232,105,87],
+				
+				"mainorange":[255,218,117]
+			},
+			"map":
+			[
+				["lightgreen","lightgrey","middlegrey","lightgrey","darkgrey"],
+				["middlegreen","lightgrey","middlegrey","lightgrey","darkgrey"],
+				["middleorange","lightgrey","middlegrey","lightgrey","darkgrey"],
+				["middleorange","lightgrey","middlegrey","lightgrey","darkgrey"],
+				
+				["lightred","lightgrey","middlegrey","lightgrey","darkgrey"],
+				["darkred","lightgrey","middlegrey","lightgrey","darkgrey"],
+				["middleorange","lightgrey","middlegrey","lightgrey","darkgrey"],
+				["middleorange","lightgrey","middlegrey","lightgrey","darkgrey"],
+				
+				["mainorange","lightgrey","darkgrey","lightgrey","darkgrey"],
+				["mainorange","lightgrey","middlegrey","lightgrey","darkgrey"],
+				
+				["lightgrey","lightgrey","middlegrey","lightgrey","middlegrey"],
+				["lightgrey","lightgrey","middlegrey","lightgrey","darkgrey"],
+				["mainorange","mainorange","mainorange","lightgrey","darkgrey"],
+				["lightgrey","lightgrey","darkgrey","lightgrey","darkgrey"],
+				["lightred","lightred","darkgrey","lightgrey","darkgrey"],
+				["lightred","lightgrey","darkgrey","lightgrey","darkgrey"]
+			]
+		}
+    }
+}
